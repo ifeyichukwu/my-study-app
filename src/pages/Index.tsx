@@ -1,4 +1,3 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
 import GenerateQuizModal from "@/components/GenerateQuizModal";
 
@@ -11,17 +10,28 @@ You can generate a quiz based on this content, plus any extra topics you wish.
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center max-w-xl w-full">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground mb-6">
-          Start building your amazing project here!
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="text-center max-w-2xl w-full">
+        <h1 className="text-5xl font-bold mb-6 text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Welcome to Your Learning App
+        </h1>
+        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+          Start your learning journey and generate custom quizzes!
         </p>
-        <div className="mb-8 text-left p-4 rounded border bg-muted">
-          <div className="font-semibold mb-2">Lesson Content</div>
-          <div className="whitespace-pre-wrap">{LESSON_CONTENT}</div>
+        
+        <div className="mb-8 text-left p-6 rounded-xl border border-blue-200 bg-white/70 backdrop-blur-sm shadow-lg">
+          <div className="font-semibold mb-3 text-lg text-blue-800 flex items-center">
+            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+            Lesson Content
+          </div>
+          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+            {LESSON_CONTENT}
+          </div>
         </div>
-        <GenerateQuizModal lessonContent={LESSON_CONTENT} />
+        
+        <div className="flex justify-center">
+          <GenerateQuizModal lessonContent={LESSON_CONTENT} />
+        </div>
       </div>
     </div>
   );
