@@ -52,18 +52,12 @@ The Renaissance laid the foundation for the modern world, influencing art, scien
               <Upload className="h-5 w-5 mr-2" />
               Upload Your First Document
             </Button>
-            <GenerateQuizModal 
-              lessonContent={lessonContent}
-              triggerText="Try Sample Quiz"
-            />
+            <GenerateQuizModal lessonContent={lessonContent} />
           </div>
         </div>
 
         {/* Quick Start Tutorial */}
         <QuickStartTutorial />
-
-        {/* Group Study Section */}
-        <GroupStudy />
 
         {/* Sample Lesson Content */}
         <Card className="bg-white/70 backdrop-blur-sm border-blue-200 mb-8">
@@ -78,13 +72,13 @@ The Renaissance laid the foundation for the modern world, influencing art, scien
               <div className="whitespace-pre-line">{lessonContent}</div>
             </div>
             <div className="mt-6 text-center">
-              <GenerateQuizModal 
-                lessonContent={lessonContent}
-                triggerText="Generate Quiz from This Content"
-              />
+              <GenerateQuizModal lessonContent={lessonContent} />
             </div>
           </CardContent>
         </Card>
+
+        {/* Group Study Section - moved to be next to Quiz Generator */}
+        <GroupStudy />
 
         {/* Recent Activity */}
         <RecentActivity />
