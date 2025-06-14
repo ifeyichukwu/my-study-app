@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { BookOpen, FileText, Home, Library } from 'lucide-react';
+import { BookOpen, Brain, Home, Library } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Navigation = () => {
@@ -10,7 +11,7 @@ const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/library', label: 'Library', icon: Library },
-    { path: '/documents', label: 'Documents', icon: FileText },
+    { path: '/quiz-generator', label: 'Quiz Generator', icon: Brain },
   ];
 
   return (
