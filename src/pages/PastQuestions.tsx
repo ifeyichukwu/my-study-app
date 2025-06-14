@@ -57,40 +57,50 @@ const PastQuestions = () => {
   }, []);
 
   const fetchCourses = async () => {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .order('course_code');
-    
-    if (error) {
-      toast({
-        title: "Error fetching courses",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      setCourses(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('courses' as any)
+        .select('*')
+        .order('course_code');
+      
+      if (error) {
+        console.error('Error fetching courses:', error);
+        toast({
+          title: "Error fetching courses",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setCourses(data || []);
+      }
+    } catch (err) {
+      console.error('Error in fetchCourses:', err);
     }
   };
 
   const fetchPastQuestions = async () => {
-    const { data, error } = await supabase
-      .from('past_questions')
-      .select(`
-        *,
-        courses (*),
-        question_answers (*)
-      `)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      toast({
-        title: "Error fetching questions",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      setPastQuestions(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('past_questions' as any)
+        .select(`
+          *,
+          courses (*),
+          question_answers (*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching questions:', error);
+        toast({
+          title: "Error fetching questions",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setPastQuestions(data || []);
+      }
+    } catch (err) {
+      console.error('Error in fetchPastQuestions:', err);
     }
   };
 
@@ -119,42 +129,50 @@ const PastQuestions = () => {
       }
 
       // Insert the question
-      const { data: questionData, error: questionError } = await supabase
-        .from('past_questions')
-        .insert({
-          user_id: user.id,
-          course_id: selectedCourse,
-          academic_session: academicSession,
-          question_text: questionText,
-          question_type: questionType || null,
-          exam_type: examType || null,
-          marks: marks ? parseInt(marks) : null,
-          question_number: questionNumber ? parseInt(questionNumber) : null,
-        })
+      const questionData = {
+        user_id: user.id,
+        course_id: selectedCourse,
+        academic_session: academicSession,
+        question_text: questionText,
+        question_type: questionType || null,
+        exam_type: examType || null,
+        marks: marks ? parseInt(marks) : null,
+        question_number: questionNumber ? parseInt(questionNumber) : null,
+      };
+
+      const { data: insertedQuestion, error: questionError } = await supabase
+        .from('past_questions' as any)
+        .insert(questionData)
         .select()
         .single();
 
-      if (questionError) throw questionError;
+      if (questionError) {
+        console.error('Error inserting question:', questionError);
+        throw questionError;
+      }
 
-      // Generate AI answer
-      await generateAnswer(questionData.id, questionText);
-      
-      // Reset form
-      setQuestionText('');
-      setSelectedCourse('');
-      setAcademicSession('');
-      setQuestionType('');
-      setExamType('');
-      setMarks('');
-      setQuestionNumber('');
-      
-      fetchPastQuestions();
-      
-      toast({
-        title: "Question uploaded successfully",
-        description: "AI is generating an answer...",
-      });
+      if (insertedQuestion) {
+        // Generate AI answer
+        await generateAnswer(insertedQuestion.id, questionText);
+        
+        // Reset form
+        setQuestionText('');
+        setSelectedCourse('');
+        setAcademicSession('');
+        setQuestionType('');
+        setExamType('');
+        setMarks('');
+        setQuestionNumber('');
+        
+        fetchPastQuestions();
+        
+        toast({
+          title: "Question uploaded successfully",
+          description: "AI is generating an answer...",
+        });
+      }
     } catch (error: any) {
+      console.error('Error in handleSubmitQuestion:', error);
       toast({
         title: "Error uploading question",
         description: error.message,
@@ -187,16 +205,25 @@ const PastQuestions = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error generating answer:', error);
+        return;
+      }
 
       // Store the answer
-      await supabase
-        .from('question_answers')
-        .insert({
-          question_id: questionId,
-          answer_text: data.content,
-          explanation: 'AI-generated comprehensive answer',
-        });
+      const answerData = {
+        question_id: questionId,
+        answer_text: data?.content || 'Answer could not be generated',
+        explanation: 'AI-generated comprehensive answer',
+      };
+
+      const { error: answerError } = await supabase
+        .from('question_answers' as any)
+        .insert(answerData);
+
+      if (answerError) {
+        console.error('Error storing answer:', answerError);
+      }
 
     } catch (error) {
       console.error('Error generating answer:', error);
@@ -205,8 +232,8 @@ const PastQuestions = () => {
 
   const filteredQuestions = pastQuestions.filter(q =>
     q.question_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    q.courses.course_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    q.courses.course_title.toLowerCase().includes(searchTerm.toLowerCase())
+    q.courses?.course_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    q.courses?.course_title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -359,7 +386,7 @@ const PastQuestions = () => {
                       <div className="flex items-start justify-between">
                         <div>
                           <CardTitle className="text-lg text-blue-800">
-                            {question.courses.course_code} - {question.courses.course_title}
+                            {question.courses?.course_code} - {question.courses?.course_title}
                           </CardTitle>
                           <div className="flex items-center space-x-2 mt-2">
                             <Badge variant="outline">{question.academic_session}</Badge>
