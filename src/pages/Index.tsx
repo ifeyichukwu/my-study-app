@@ -58,24 +58,6 @@ The Renaissance laid the foundation for the modern world, influencing art, scien
         {/* Quick Start Tutorial */}
         <QuickStartTutorial />
 
-        {/* Sample Lesson Content */}
-        <Card className="bg-white/70 backdrop-blur-sm border-blue-200 mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl text-blue-800 flex items-center">
-              <BookOpen className="h-6 w-6 mr-2" />
-              Sample Educational Content
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="prose max-w-none text-gray-700">
-              <div className="whitespace-pre-line">{lessonContent}</div>
-            </div>
-            <div className="mt-6 text-center">
-              <GenerateQuizModal lessonContent={lessonContent} />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Recent Activity */}
         <RecentActivity />
 
