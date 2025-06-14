@@ -12,25 +12,6 @@ import RecentActivity from '@/components/RecentActivity';
 const Index = () => {
   const navigate = useNavigate();
 
-  const lessonContent = `# The Renaissance Period
-
-The Renaissance was a period of cultural, artistic, political, and economic "rebirth" following the Middle Ages. Generally described as taking place from the 14th century to the 17th century, the Renaissance promoted the rediscovery of classical philosophy, literature and art.
-
-## Key Characteristics:
-- **Humanism**: Focus on human potential and achievements
-- **Art**: Realistic portrayal of the human form and nature
-- **Science**: Emphasis on observation and experimentation
-- **Literature**: Revival of classical texts and new forms
-
-## Notable Figures:
-- Leonardo da Vinci: Artist, inventor, scientist
-- Michelangelo: Sculptor, painter, architect
-- Galileo Galilei: Astronomer, physicist
-- William Shakespeare: Playwright and poet
-
-## Impact:
-The Renaissance laid the foundation for the modern world, influencing art, science, politics, and philosophy for centuries to come.`;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -51,7 +32,7 @@ The Renaissance laid the foundation for the modern world, influencing art, scien
               <Upload className="h-5 w-5 mr-2" />
               Upload Your First Document
             </Button>
-            <GenerateQuizModal lessonContent={lessonContent} />
+            <GenerateQuizModal />
           </div>
         </div>
 
@@ -98,66 +79,30 @@ The Renaissance laid the foundation for the modern world, influencing art, scien
         </div>
       </div>
 
-      {/* Outstanding Footer */}
+      {/* Simplified Footer */}
       <footer className="bg-gray-900 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-12">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
             {/* Brand Section */}
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
-                <BookOpen className="h-8 w-8 text-blue-400" />
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Scholar
-                </span>
-              </div>
-              <p className="text-gray-300 mb-6 max-w-md">
-                Empowering learners worldwide with AI-driven educational tools. Transform your study materials into engaging quizzes and accelerate your learning journey.
-              </p>
-              <div className="flex space-x-4">
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800">
-                  <Twitter className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800">
-                  <Github className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800">
-                  <Linkedin className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800">
-                  <Mail className="h-5 w-5" />
-                </Button>
-              </div>
+            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+              <BookOpen className="h-8 w-8 text-blue-400" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Scholar
+              </span>
             </div>
 
-            {/* Product Links */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-blue-400">Product</h3>
-              <ul className="space-y-2">
-                <li><a href="/library" className="text-gray-300 hover:text-white transition-colors">Document Library</a></li>
-                <li><a href="/quiz-generator" className="text-gray-300 hover:text-white transition-colors">Quiz Generator</a></li>
-                <li><a href="/group-study" className="text-gray-300 hover:text-white transition-colors">Group Study</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Analytics</a></li>
-              </ul>
-            </div>
-
-            {/* Support Links */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-purple-400">Support</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Getting Started</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Community</a></li>
-              </ul>
+            {/* Simple Navigation */}
+            <div className="flex space-x-6 text-gray-300 text-sm">
+              <a href="/library" className="hover:text-white transition-colors">Library</a>
+              <a href="/quiz-generator" className="hover:text-white transition-colors">Quiz Generator</a>
+              <a href="/group-study" className="hover:text-white transition-colors">Group Study</a>
             </div>
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 Scholar. All rights reserved.
-            </p>
-            <div className="flex items-center space-x-1 text-gray-400 text-sm">
+          <div className="border-t border-gray-800 mt-6 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+            <p>© 2024 Scholar. All rights reserved.</p>
+            <div className="flex items-center space-x-1 mt-2 md:mt-0">
               <span>Made with</span>
               <Heart className="h-4 w-4 text-red-400 fill-current" />
               <span>for learners everywhere</span>
