@@ -32,7 +32,7 @@ const Index = () => {
               <Upload className="h-5 w-5 mr-2" />
               Upload Your First Document
             </Button>
-            <GenerateQuizModal />
+            <GenerateQuizModal lessonContent="Welcome to Scholar - your AI-powered learning companion. Get started by generating a quiz from any topic." />
           </div>
         </div>
 
@@ -43,9 +43,9 @@ const Index = () => {
         <RecentActivity />
 
         {/* Enhanced Testimonials Section */}
-        <div className="my-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+        <div className="my-20">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
               Trusted by Students & Educators Worldwide
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -71,7 +71,7 @@ const Index = () => {
               onClick={() => navigate('/quiz-generator')}
               size="lg" 
               variant="outline"
-              className="border-white text-white hover:bg-white/10"
+              className="border-2 border-white text-white hover:bg-white hover:text-blue-600 bg-transparent font-semibold transition-all duration-200"
             >
               Try Demo Quiz
             </Button>
