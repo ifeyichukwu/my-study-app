@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, BookOpen } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sparkles, BookOpen, Upload, FileText, X } from "lucide-react";
 
 type QuizQuestion = {
   question: string;
@@ -23,16 +25,19 @@ type QuizQuestion = {
 async function generateQuiz({
   lessonContent,
   userTopics,
+  uploadedDocument,
 }: {
   lessonContent: string;
   userTopics: string;
+  uploadedDocument?: File;
 }): Promise<QuizQuestion[]> {
   // TODO: Integrate with Supabase Edge Function that calls OpenAI with your key.
   // For now, returns mock data.
   const topics = userTopics ? ` and also covering: ${userTopics}` : "";
+  const documentText = uploadedDocument ? ` based on the uploaded document "${uploadedDocument.name}"` : "";
   return [
     {
-      question: `Which topic is covered in this lesson${topics}?`,
+      question: `Which topic is covered in this lesson${topics}${documentText}?`,
       options: ["Topic A", "Topic B", "Topic C", "Topic D"],
       answer: "Topic A",
     },
@@ -40,7 +45,7 @@ async function generateQuiz({
       question: "What is the main takeaway from the lesson?",
       options: [
         "Option 1",
-        "Option 2",
+        "Option 2", 
         "Option 3",
         "Option 4",
       ],
@@ -56,16 +61,32 @@ interface GenerateQuizModalProps {
 const GenerateQuizModal: React.FC<GenerateQuizModalProps> = ({ lessonContent }) => {
   const [open, setOpen] = useState(false);
   const [userTopics, setUserTopics] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [quiz, setQuiz] = useState<QuizQuestion[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+  };
 
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
     setQuiz(null);
     try {
-      const result = await generateQuiz({ lessonContent, userTopics });
+      const result = await generateQuiz({ 
+        lessonContent, 
+        userTopics,
+        uploadedDocument: selectedFile || undefined
+      });
       setQuiz(result);
     } catch (err) {
       setError("Failed to generate quiz. Please try again!");
@@ -88,7 +109,7 @@ const GenerateQuizModal: React.FC<GenerateQuizModalProps> = ({ lessonContent }) 
             Generate Quiz From Lesson
           </DialogTitle>
           <DialogDescription className="text-gray-600">
-            We'll create a set of multiple choice questions based on the whole lesson content.
+            We'll create a set of multiple choice questions based on the lesson content or uploaded document.
             <br />
             <span className="text-sm text-blue-600 font-medium">
               Optionally, enter extra topics or questions you'd like included.
@@ -98,7 +119,54 @@ const GenerateQuizModal: React.FC<GenerateQuizModalProps> = ({ lessonContent }) 
         
         <div className="flex flex-col gap-6 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Additional Topics (Optional)</label>
+            <Label className="text-sm font-medium text-gray-700">Upload Document (Optional)</Label>
+            <div className="mt-1">
+              <input
+                id="quiz-file"
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <label
+                htmlFor="quiz-file"
+                className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+              >
+                {selectedFile ? (
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 text-blue-600 mr-2" />
+                      <span className="text-sm text-gray-700 truncate">
+                        {selectedFile.name}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeFile}
+                      className="ml-2 p-1 h-6 w-6"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5 text-blue-600 mr-2" />
+                    <span className="text-sm text-gray-600">
+                      Choose document to generate quiz from (PDF, DOC, DOCX, TXT)
+                    </span>
+                  </>
+                )}
+              </label>
+            </div>
+            <p className="text-xs text-gray-500">
+              If no document is uploaded, the quiz will be generated from the lesson content.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700">Additional Topics (Optional)</Label>
             <Textarea
               placeholder="Add extra topics or questions here (optional)..."
               value={userTopics}
