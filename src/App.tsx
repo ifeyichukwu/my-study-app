@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Library from "./pages/Library";
 import QuizGenerator from "./pages/QuizGenerator";
 import GroupStudy from "./pages/GroupStudy";
+import PastQuestions from "./pages/PastQuestions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/library" element={<Library />} />
             <Route path="/quiz-generator" element={<QuizGenerator />} />
+            <Route path="/past-questions" element={<PastQuestions />} />
             <Route path="/group-study" element={<GroupStudy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
