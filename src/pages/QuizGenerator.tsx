@@ -6,6 +6,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Brain, Upload, FileText, Sparkles, MessageCircle, BookOpen, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+type QuizQuestion = {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+};
 
 const QuizGenerator = () => {
   const [activeTab, setActiveTab] = useState('generator');
@@ -15,6 +24,8 @@ const QuizGenerator = () => {
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [generatedQuiz, setGeneratedQuiz] = useState<QuizQuestion[] | null>(null);
+  const { toast } = useToast();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -28,13 +39,74 @@ const QuizGenerator = () => {
   };
 
   const handleGenerateQuiz = async () => {
+    if (!lessonContent.trim() && !selectedFile) {
+      toast({
+        title: "Content Required",
+        description: "Please provide lesson content or upload a document to generate a quiz.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
-    // TODO: Implement quiz generation with Claude API
-    setTimeout(() => {
-      setLoading(false);
-      // Mock quiz generation result
-      alert('Quiz generated successfully! (This will be replaced with actual quiz display)');
-    }, 2000);
+    setGeneratedQuiz(null);
+
+    try {
+      let content = lessonContent;
+      
+      // If file is selected, read its content
+      if (selectedFile) {
+        const fileContent = await readFileContent(selectedFile);
+        content = fileContent + (lessonContent ? '\n\n' + lessonContent : '');
+      }
+
+      if (userTopics.trim()) {
+        content += `\n\nAdditional topics to focus on: ${userTopics}`;
+      }
+
+      const { data, error } = await supabase.functions.invoke('ai-study-assistant', {
+        body: {
+          messages: [{ role: 'user', content: `Please generate a quiz based on this content:\n\n${content}` }],
+          type: 'quiz'
+        },
+      });
+
+      if (error) throw error;
+
+      try {
+        const quizData = JSON.parse(data.content);
+        setGeneratedQuiz(quizData);
+        toast({
+          title: "Quiz Generated!",
+          description: `Successfully generated ${quizData.length} questions.`,
+        });
+      } catch (parseError) {
+        console.error('Failed to parse quiz JSON:', parseError);
+        toast({
+          title: "Generation Error",
+          description: "Failed to generate quiz. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Quiz generation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate quiz. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    setLoading(false);
+  };
+
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
   };
 
   const handleSendMessage = async () => {
@@ -45,15 +117,36 @@ const QuizGenerator = () => {
     setCurrentMessage('');
     setLoading(true);
 
-    // TODO: Implement Claude API call
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-study-assistant', {
+        body: {
+          messages: [...chatMessages, newMessage],
+          type: 'chat'
+        },
+      });
+
+      if (error) throw error;
+
       const assistantMessage = { 
         role: 'assistant' as const, 
-        content: 'This is a placeholder response. I will help you with your studies once the Claude API is integrated!' 
+        content: data.content 
       };
       setChatMessages(prev => [...prev, assistantMessage]);
-      setLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage = { 
+        role: 'assistant' as const, 
+        content: 'I apologize, but I encountered an error. Please try again.' 
+      };
+      setChatMessages(prev => [...prev, errorMessage]);
+      toast({
+        title: "Chat Error",
+        description: "Failed to get response. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -65,7 +158,7 @@ const QuizGenerator = () => {
             AI Study Assistant
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Generate quizzes from your content and get personalized study assistance powered by Claude AI
+            Generate quizzes from your content and get personalized study assistance powered by OpenAI
           </p>
         </div>
 
@@ -190,6 +283,41 @@ const QuizGenerator = () => {
                   </>
                 )}
               </Button>
+
+              {/* Generated Quiz Display */}
+              {generatedQuiz && (
+                <div className="mt-8 space-y-4">
+                  <h3 className="text-xl font-semibold text-gray-800 border-b border-blue-200 pb-2">
+                    Generated Quiz ({generatedQuiz.length} questions)
+                  </h3>
+                  {generatedQuiz.map((question, index) => (
+                    <Card key={index} className="border-blue-200">
+                      <CardContent className="p-6">
+                        <div className="font-semibold mb-4 text-gray-800">
+                          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm mr-3">
+                            Question {index + 1}
+                          </span>
+                          {question.question}
+                        </div>
+                        <div className="space-y-2 mb-4">
+                          {question.options.map((option, optIndex) => (
+                            <div key={optIndex} className="flex items-center text-gray-700">
+                              <span className="w-8 h-8 rounded-full border-2 border-blue-300 flex items-center justify-center text-sm font-medium mr-3 text-blue-600">
+                                {String.fromCharCode(65 + optIndex)}
+                              </span>
+                              <span>{option}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg border border-green-200">
+                          <div className="font-medium">Correct Answer: {question.correctAnswer}</div>
+                          <div className="text-sm mt-1">{question.explanation}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (
