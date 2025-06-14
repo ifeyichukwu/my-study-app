@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,8 +69,7 @@ const Index = () => {
             <Button 
               onClick={() => navigate('/quiz-generator')}
               size="lg" 
-              variant="outline"
-              className="border-white text-white hover:bg-white/10"
+              className="bg-white text-blue-600 hover:bg-gray-100"
             >
               Try Demo Quiz
             </Button>
