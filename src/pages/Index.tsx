@@ -1,4 +1,3 @@
-
 import GenerateQuizModal from "@/components/GenerateQuizModal";
 
 const LESSON_CONTENT = `
@@ -10,7 +9,7 @@ You can generate a quiz based on this content, plus any extra topics you wish.
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="text-center max-w-2xl w-full">
         <h1 className="text-5xl font-bold mb-6 text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Welcome to Your Learning App
