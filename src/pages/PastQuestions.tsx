@@ -58,8 +58,8 @@ const PastQuestions = () => {
 
   const fetchCourses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('courses' as any)
+      const { data, error } = await (supabase as any)
+        .from('courses')
         .select('*')
         .order('course_code');
       
@@ -80,8 +80,8 @@ const PastQuestions = () => {
 
   const fetchPastQuestions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('past_questions' as any)
+      const { data, error } = await (supabase as any)
+        .from('past_questions')
         .select(`
           *,
           courses (*),
@@ -140,8 +140,8 @@ const PastQuestions = () => {
         question_number: questionNumber ? parseInt(questionNumber) : null,
       };
 
-      const { data: insertedQuestion, error: questionError } = await supabase
-        .from('past_questions' as any)
+      const { data: insertedQuestion, error: questionError } = await (supabase as any)
+        .from('past_questions')
         .insert(questionData)
         .select()
         .single();
@@ -217,8 +217,8 @@ const PastQuestions = () => {
         explanation: 'AI-generated comprehensive answer',
       };
 
-      const { error: answerError } = await supabase
-        .from('question_answers' as any)
+      const { error: answerError } = await (supabase as any)
+        .from('question_answers')
         .insert(answerData);
 
       if (answerError) {
