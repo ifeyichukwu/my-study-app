@@ -8,7 +8,6 @@ import GenerateQuizModal from '@/components/GenerateQuizModal';
 import QuickStartTutorial from '@/components/QuickStartTutorial';
 import Testimonials from '@/components/Testimonials';
 import RecentActivity from '@/components/RecentActivity';
-import GroupStudy from '@/components/GroupStudy';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -76,9 +75,6 @@ The Renaissance laid the foundation for the modern world, influencing art, scien
             </div>
           </CardContent>
         </Card>
-
-        {/* Group Study Section - moved to be next to Quiz Generator */}
-        <GroupStudy />
 
         {/* Recent Activity */}
         <RecentActivity />
