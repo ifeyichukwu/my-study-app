@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { BookOpen, FileText, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import UploadDocumentModal from '@/components/UploadDocumentModal';
 
 // Mock data organized by courses/shelves
-const libraryData = [
+const initialLibraryData = [
   {
     courseCode: "ECE 319",
     courseName: "Data Structures and Algorithms",
@@ -69,6 +70,8 @@ const libraryData = [
 
 const Library = () => {
   const [openShelves, setOpenShelves] = useState<string[]>([]);
+  const [libraryData, setLibraryData] = useState(initialLibraryData);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   const toggleShelf = (courseCode: string) => {
     setOpenShelves(prev => 
@@ -76,6 +79,44 @@ const Library = () => {
         ? prev.filter(code => code !== courseCode)
         : [...prev, courseCode]
     );
+  };
+
+  const handleDocumentUploaded = (newDocument: any) => {
+    const courseCode = newDocument.courseCode;
+    
+    if (courseCode) {
+      // Add to existing course shelf
+      setLibraryData(prev => prev.map(shelf => 
+        shelf.courseCode === courseCode 
+          ? {
+              ...shelf,
+              documents: [...shelf.documents, { ...newDocument, id: Date.now() }]
+            }
+          : shelf
+      ));
+    } else {
+      // If no course code provided, add to a general shelf (you could customize this logic)
+      setLibraryData(prev => {
+        const generalShelf = prev.find(shelf => shelf.courseCode === "GENERAL");
+        if (generalShelf) {
+          return prev.map(shelf => 
+            shelf.courseCode === "GENERAL"
+              ? {
+                  ...shelf,
+                  documents: [...shelf.documents, { ...newDocument, id: Date.now() }]
+                }
+              : shelf
+          );
+        } else {
+          // Create a new general shelf if it doesn't exist
+          return [...prev, {
+            courseCode: "GENERAL",
+            courseName: "General Documents",
+            documents: [{ ...newDocument, id: Date.now() }]
+          }];
+        }
+      });
+    }
   };
 
   return (
@@ -88,6 +129,14 @@ const Library = () => {
           <p className="text-xl text-gray-600 mb-6">
             Browse your documents organized by course shelves
           </p>
+          
+          <Button 
+            onClick={() => setUploadModalOpen(true)}
+            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Upload to Library
+          </Button>
         </div>
 
         <div className="space-y-6">
@@ -177,6 +226,12 @@ const Library = () => {
             </Card>
           ))}
         </div>
+
+        <UploadDocumentModal
+          open={uploadModalOpen}
+          onOpenChange={setUploadModalOpen}
+          onDocumentUploaded={handleDocumentUploaded}
+        />
       </div>
     </div>
   );
