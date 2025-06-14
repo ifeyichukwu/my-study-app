@@ -1,89 +1,96 @@
 
-import GenerateQuizModal from "@/components/GenerateQuizModal";
-import Testimonials from "@/components/Testimonials";
-import QuickStartTutorial from "@/components/QuickStartTutorial";
-import RecentActivity from "@/components/RecentActivity";
-
-const LESSON_CONTENT = `
-# Introduction to Cellular Biology
-
-## Cell Structure and Function
-
-Cells are the fundamental units of life. All living organisms are composed of one or more cells, and the cell is the smallest unit that can be classified as a living thing.
-
-### Key Components:
-- **Cell Membrane**: Controls what enters and exits the cell
-- **Nucleus**: Contains genetic material (DNA)
-- **Cytoplasm**: Gel-like substance where cellular processes occur
-- **Mitochondria**: Powerhouses that produce energy (ATP)
-
-### Types of Cells:
-1. **Prokaryotic**: No membrane-bound nucleus (bacteria)
-2. **Eukaryotic**: Has membrane-bound nucleus (plants, animals, fungi)
-
-This foundational knowledge forms the basis for understanding more complex biological processes like photosynthesis, cellular respiration, and genetic inheritance.
-`;
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Brain, Upload, Users, MessageCircle, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import GenerateQuizModal from '@/components/GenerateQuizModal';
+import QuickStartTutorial from '@/components/QuickStartTutorial';
+import Testimonials from '@/components/Testimonials';
+import RecentActivity from '@/components/RecentActivity';
+import GroupStudy from '@/components/GroupStudy';
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  const lessonContent = `# The Renaissance Period
+
+The Renaissance was a period of cultural, artistic, political, and economic "rebirth" following the Middle Ages. Generally described as taking place from the 14th century to the 17th century, the Renaissance promoted the rediscovery of classical philosophy, literature and art.
+
+## Key Characteristics:
+- **Humanism**: Focus on human potential and achievements
+- **Art**: Realistic portrayal of the human form and nature
+- **Science**: Emphasis on observation and experimentation
+- **Literature**: Revival of classical texts and new forms
+
+## Notable Figures:
+- Leonardo da Vinci: Artist, inventor, scientist
+- Michelangelo: Sculptor, painter, architect
+- Galileo Galilei: Astronomer, physicist
+- William Shakespeare: Playwright and poet
+
+## Impact:
+The Renaissance laid the foundation for the modern world, influencing art, science, politics, and philosophy for centuries to come.`;
+
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Hero Section */}
-        <div className="text-center mb-12 pt-8">
-          <h1 className="text-5xl font-bold mb-6 text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Master Any Subject with AI-Powered Learning
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            Welcome to Scholar
           </h1>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-3xl mx-auto">
-            Transform your study materials into personalized quizzes. Upload documents, get intelligent questions, and accelerate your learning with Scholar's AI assistant.
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+            Transform your learning with AI-powered quiz generation. Upload your materials, generate personalized quizzes, and accelerate your educational journey.
           </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/library')}
+              size="lg" 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              <Upload className="h-5 w-5 mr-2" />
+              Upload Your First Document
+            </Button>
+            <GenerateQuizModal 
+              lessonContent={lessonContent}
+              triggerText="Try Sample Quiz"
+            />
+          </div>
         </div>
 
         {/* Quick Start Tutorial */}
         <QuickStartTutorial />
 
+        {/* Group Study Section */}
+        <GroupStudy />
+
         {/* Sample Lesson Content */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-12">
-          <div className="lg:col-span-2">
-            <div className="text-left p-6 rounded-xl border border-blue-200 bg-white/70 backdrop-blur-sm shadow-lg mb-8">
-              <div className="font-semibold mb-3 text-lg text-blue-800 flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                Sample Lesson Content
-              </div>
-              <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
-                {LESSON_CONTENT}
-              </div>
-              <div className="mt-6 flex justify-center">
-                <GenerateQuizModal lessonContent={LESSON_CONTENT} />
-              </div>
+        <Card className="bg-white/70 backdrop-blur-sm border-blue-200 mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl text-blue-800 flex items-center">
+              <BookOpen className="h-6 w-6 mr-2" />
+              Sample Educational Content
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="prose max-w-none text-gray-700">
+              <div className="whitespace-pre-line">{lessonContent}</div>
             </div>
-          </div>
-          
-          {/* Recent Activity Sidebar */}
-          <div className="lg:col-span-1">
-            <RecentActivity />
-          </div>
-        </div>
+            <div className="mt-6 text-center">
+              <GenerateQuizModal 
+                lessonContent={lessonContent}
+                triggerText="Generate Quiz from This Content"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <RecentActivity />
 
         {/* Testimonials */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-            Trusted by Learners Worldwide
-          </h2>
-          <Testimonials />
-        </div>
-
-        {/* Call to Action */}
-        <div className="text-center bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white">
-          <h3 className="text-2xl font-bold mb-4">Ready to Transform Your Learning?</h3>
-          <p className="text-blue-100 mb-6">Join thousands of students and educators using Scholar to enhance their educational experience.</p>
-          <GenerateQuizModal 
-            lessonContent={LESSON_CONTENT}
-            triggerButtonProps={{
-              className: "bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-3"
-            }}
-            triggerText="Start Learning Now"
-          />
-        </div>
+        <Testimonials />
       </div>
     </div>
   );
