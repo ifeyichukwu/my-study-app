@@ -32,7 +32,7 @@ const Index = () => {
               <Upload className="h-5 w-5 mr-2" />
               Upload Your First Document
             </Button>
-            <GenerateQuizModal />
+            <GenerateQuizModal lessonContent="Welcome to Scholar - a platform for AI-powered quiz generation from your study materials." />
           </div>
         </div>
 
