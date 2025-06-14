@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +16,12 @@ type QuizQuestion = {
   explanation: string;
 };
 
+type DocumentContext = {
+  fileName: string;
+  content: string;
+  uploadedAt: Date;
+};
+
 const QuizGenerator = () => {
   const [activeTab, setActiveTab] = useState('generator');
   const [lessonContent, setLessonContent] = useState('');
@@ -25,6 +31,7 @@ const QuizGenerator = () => {
   const [currentMessage, setCurrentMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState<QuizQuestion[] | null>(null);
+  const [documentContext, setDocumentContext] = useState<DocumentContext | null>(null);
   const { toast } = useToast();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,6 +43,38 @@ const QuizGenerator = () => {
 
   const removeFile = () => {
     setSelectedFile(null);
+    setDocumentContext(null);
+  };
+
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
+  const buildContextualPrompt = (content: string, isQuizGeneration: boolean = false) => {
+    let contextualPrompt = content;
+
+    // Add document context if available
+    if (documentContext) {
+      contextualPrompt = `DOCUMENT CONTEXT (from ${documentContext.fileName}):\n${documentContext.content}\n\n`;
+      contextualPrompt += `USER REQUEST: ${content}`;
+    }
+
+    // Add chat history context for quiz generation
+    if (isQuizGeneration && chatMessages.length > 0) {
+      const recentChatHistory = chatMessages.slice(-6).map(msg => 
+        `${msg.role.toUpperCase()}: ${msg.content}`
+      ).join('\n');
+      
+      contextualPrompt += `\n\nRECENT CONVERSATION HISTORY:\n${recentChatHistory}`;
+      contextualPrompt += `\n\nPlease generate quiz questions that incorporate topics from both the provided content and our recent conversation.`;
+    }
+
+    return contextualPrompt;
   };
 
   const handleGenerateQuiz = async () => {
@@ -54,19 +93,32 @@ const QuizGenerator = () => {
     try {
       let content = lessonContent;
       
-      // If file is selected, read its content
+      // If file is selected, read its content and store in context
       if (selectedFile) {
         const fileContent = await readFileContent(selectedFile);
         content = fileContent + (lessonContent ? '\n\n' + lessonContent : '');
+        
+        // Store document context for chat assistant
+        setDocumentContext({
+          fileName: selectedFile.name,
+          content: fileContent,
+          uploadedAt: new Date()
+        });
       }
 
       if (userTopics.trim()) {
         content += `\n\nAdditional topics to focus on: ${userTopics}`;
       }
 
+      // Build contextual prompt that includes chat history
+      const contextualPrompt = buildContextualPrompt(
+        `Please generate a quiz based on this content:\n\n${content}`,
+        true
+      );
+
       const { data, error } = await supabase.functions.invoke('ai-study-assistant', {
         body: {
-          messages: [{ role: 'user', content: `Please generate a quiz based on this content:\n\n${content}` }],
+          messages: [{ role: 'user', content: contextualPrompt }],
           type: 'quiz'
         },
       });
@@ -76,9 +128,16 @@ const QuizGenerator = () => {
       try {
         const quizData = JSON.parse(data.content);
         setGeneratedQuiz(quizData);
+        
+        // Add quiz generation to chat history for context
+        setChatMessages(prev => [...prev, 
+          { role: 'user', content: `Generated a quiz from: ${selectedFile?.name || 'lesson content'}` },
+          { role: 'assistant', content: `I've generated a ${quizData.length}-question quiz covering the key topics from your content.` }
+        ]);
+        
         toast({
           title: "Quiz Generated!",
-          description: `Successfully generated ${quizData.length} questions.`,
+          description: `Successfully generated ${quizData.length} questions with contextual awareness.`,
         });
       } catch (parseError) {
         console.error('Failed to parse quiz JSON:', parseError);
@@ -100,15 +159,6 @@ const QuizGenerator = () => {
     setLoading(false);
   };
 
-  const readFileContent = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
-  };
-
   const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
     
@@ -118,9 +168,12 @@ const QuizGenerator = () => {
     setLoading(true);
 
     try {
+      // Build contextual prompt that includes document context
+      const contextualPrompt = buildContextualPrompt(currentMessage);
+
       const { data, error } = await supabase.functions.invoke('ai-study-assistant', {
         body: {
-          messages: [...chatMessages, newMessage],
+          messages: [...chatMessages, { role: 'user', content: contextualPrompt }],
           type: 'chat'
         },
       });
@@ -158,7 +211,7 @@ const QuizGenerator = () => {
             AI Study Assistant
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Generate quizzes from your content and get personalized study assistance powered by OpenAI
+            Generate contextual quizzes and get personalized study assistance that remembers your documents and conversations
           </p>
         </div>
 
@@ -183,15 +236,37 @@ const QuizGenerator = () => {
           </div>
         </div>
 
+        {/* Context Indicator */}
+        {documentContext && (
+          <div className="max-w-4xl mx-auto mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <FileText className="h-5 w-5 text-blue-600 mr-2" />
+                  <span className="text-sm font-medium text-blue-800">
+                    Context: {documentContext.fileName}
+                  </span>
+                  <span className="text-xs text-blue-600 ml-2">
+                    (Uploaded {documentContext.uploadedAt.toLocaleTimeString()})
+                  </span>
+                </div>
+                <span className="text-xs text-blue-600">
+                  AI assistant is aware of this document
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'generator' ? (
           <Card className="max-w-4xl mx-auto">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <BookOpen className="mr-3 h-6 w-6 text-blue-600" />
-                Generate Quiz From Content
+                Generate Contextual Quiz
               </CardTitle>
               <CardDescription>
-                Upload a document or paste lesson content to generate a custom quiz with AI assistance.
+                Upload a document or paste lesson content to generate a custom quiz. The AI will consider your chat history for better context.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -238,6 +313,9 @@ const QuizGenerator = () => {
                     )}
                   </label>
                 </div>
+                <p className="text-xs text-blue-600">
+                  Uploaded documents will be available to the chat assistant for contextual responses.
+                </p>
               </div>
 
               {/* Lesson Content Section */}
@@ -274,12 +352,12 @@ const QuizGenerator = () => {
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    Generating Quiz...
+                    Generating Contextual Quiz...
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Generate Quiz with AI
+                    Generate Quiz with AI Context
                   </>
                 )}
               </Button>
@@ -325,10 +403,10 @@ const QuizGenerator = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <MessageCircle className="mr-3 h-6 w-6 text-purple-600" />
-                AI Study Assistant Chat
+                Context-Aware Study Assistant
               </CardTitle>
               <CardDescription>
-                Ask questions about your studies, get explanations, and receive personalized learning guidance.
+                Ask questions about your studies. I remember uploaded documents and our conversation history for better assistance.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col">
@@ -337,8 +415,13 @@ const QuizGenerator = () => {
                 {chatMessages.length === 0 ? (
                   <div className="text-center text-gray-500 mt-20">
                     <Brain className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p>Start a conversation with your AI study assistant!</p>
+                    <p>Start a conversation with your context-aware AI study assistant!</p>
                     <p className="text-sm mt-2">Ask about concepts, get study tips, or request explanations.</p>
+                    {documentContext && (
+                      <p className="text-xs mt-2 text-blue-600">
+                        I'm aware of your uploaded document: {documentContext.fileName}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   chatMessages.map((message, index) => (
@@ -363,7 +446,7 @@ const QuizGenerator = () => {
                     <div className="bg-white text-gray-800 border p-3 rounded-lg">
                       <div className="flex items-center space-x-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
-                        <span>Assistant is thinking...</span>
+                        <span>Assistant is thinking with context...</span>
                       </div>
                     </div>
                   </div>
