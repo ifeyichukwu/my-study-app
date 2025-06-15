@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BookOpen, Brain, Home, Library, Users, FileQuestion, User, LogIn, Menu } from 'lucide-react';
@@ -17,6 +17,7 @@ const Navigation = () => {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { profile } = useProfile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -25,6 +26,11 @@ const Navigation = () => {
     { path: '/past-questions', label: 'Past Questions', icon: FileQuestion },
     { path: '/group-study', label: 'Group Study', icon: Users },
   ];
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false); // Close mobile menu after navigation
+  };
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -65,7 +71,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation Menu */}
         <div className="lg:hidden">
-          <Sheet>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm">
                 <Menu className="h-5 w-5" />
@@ -77,7 +83,7 @@ const Navigation = () => {
                   <Button
                     key={item.path}
                     variant={location.pathname === item.path ? "default" : "ghost"}
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavigation(item.path)}
                     className={`flex items-center space-x-3 justify-start w-full ${
                       location.pathname === item.path
                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
