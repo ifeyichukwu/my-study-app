@@ -113,38 +113,6 @@ const Index = () => {
           </div>
         </div>
       </div>
-
-      {/* Simplified Footer */}
-      <footer className="bg-gray-900 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            {/* Brand Section */}
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <BookOpen className="h-8 w-8 text-blue-400" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Scholar
-              </span>
-            </div>
-
-            {/* Simple Navigation */}
-            <div className="flex space-x-6 text-gray-300 text-sm">
-              <a href="/library" className="hover:text-white transition-colors">Library</a>
-              <a href="/quiz-generator" className="hover:text-white transition-colors">Quiz Generator</a>
-              <a href="/group-study" className="hover:text-white transition-colors">Group Study</a>
-            </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="border-t border-gray-800 mt-6 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>© 2024 Scholar. All rights reserved.</p>
-            <div className="flex items-center space-x-1 mt-2 md:mt-0">
-              <span>Made with</span>
-              <Heart className="h-4 w-4 text-red-400 fill-current" />
-              <span>for learners everywhere</span>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
