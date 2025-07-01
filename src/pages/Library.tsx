@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, FileText, ChevronDown, ChevronUp, Plus, Link2, Video, ExternalLink, FileIcon, Trash2, Clock } from 'lucide-react';
+import { BookOpen, FileText, ChevronDown, ChevronUp, Plus, Link2, Video, ExternalLink, FileIcon, Trash2, Clock, Search, Filter, Calendar, Tag, X } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import UploadDocumentModal from '@/components/UploadDocumentModal';
 
-// Enhanced data structure with resource tracking
+// Enhanced data structure with document types, tags, and resource tracking
 const initialDocuments = [
   {
     id: 1,
@@ -18,6 +18,8 @@ const initialDocuments = [
     uploadDate: "2024-06-10",
     fileSize: "3.2 MB",
     pages: 189,
+    type: "textbook",
+    tags: ["algorithms", "data-structures", "programming", "computer-science"],
     courses: ["ECE 319"],
     resources: [
       {
@@ -43,6 +45,8 @@ const initialDocuments = [
     uploadDate: "2024-06-08",
     fileSize: "2.8 MB",
     pages: 245,
+    type: "handbook",
+    tags: ["algorithms", "advanced", "optimization", "graphs"],
     courses: ["ECE 319", "CS 101"],
     resources: [
       {
@@ -61,6 +65,8 @@ const initialDocuments = [
     uploadDate: "2024-06-12",
     fileSize: "2.4 MB",
     pages: 245,
+    type: "textbook",
+    tags: ["electronics", "transmission", "engineering", "signals"],
     courses: ["ECE 320"],
     resources: []
   },
@@ -71,6 +77,8 @@ const initialDocuments = [
     uploadDate: "2024-06-08",
     fileSize: "1.8 MB",
     pages: 156,
+    type: "guide",
+    tags: ["networking", "protocols", "tcp-ip", "internet"],
     courses: ["CS 101"],
     resources: [
       {
@@ -89,6 +97,8 @@ const initialDocuments = [
     uploadDate: "2024-06-05",
     fileSize: "4.1 MB",
     pages: 312,
+    type: "reference",
+    tags: ["networking", "tcp-ip", "protocols", "communication"],
     courses: ["CS 101", "ECE 320"],
     resources: []
   },
@@ -116,14 +126,65 @@ const Library = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [showAddResource, setShowAddResource] = useState<number | null>(null);
   const [newResource, setNewResource] = useState({ type: 'video', title: '', url: '' });
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Generate library data from documents and courses
+  // Get all unique document types and tags for filters
+  const documentTypes = useMemo(() => {
+    const types = [...new Set(documents.map(doc => doc.type))];
+    return types.sort();
+  }, [documents]);
+
+  const allTags = useMemo(() => {
+    const tags = [...new Set(documents.flatMap(doc => doc.tags))];
+    return tags.sort();
+  }, [documents]);
+
+  // Filter documents based on search and filters
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc => {
+      // Text search (title, author, tags)
+      const searchMatch = searchQuery === '' || 
+        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      // Type filter
+      const typeMatch = typeFilter === 'all' || doc.type === typeFilter;
+
+      // Date filter
+      const docDate = new Date(doc.uploadDate);
+      let dateMatch = true;
+      if (dateFilter === 'week') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        dateMatch = docDate >= weekAgo;
+      } else if (dateFilter === 'month') {
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        dateMatch = docDate >= monthAgo;
+      }
+
+      // Tag filter
+      const tagMatch = selectedTags.length === 0 || 
+        selectedTags.some(tag => doc.tags.includes(tag));
+
+      return searchMatch && typeMatch && dateMatch && tagMatch;
+    });
+  }, [documents, searchQuery, typeFilter, dateFilter, selectedTags]);
+
+  // Generate library data from filtered documents and courses
   const libraryData = useMemo(() => {
     return courses.map(course => ({
       ...course,
-      documents: documents.filter(doc => doc.courses.includes(course.courseCode))
-    }));
-  }, [documents, courses]);
+      documents: filteredDocuments.filter(doc => doc.courses.includes(course.courseCode))
+    })).filter(course => course.documents.length > 0); // Only show courses with matching documents
+  }, [filteredDocuments, courses]);
 
   const toggleShelf = (courseCode: string) => {
     setOpenShelves(prev => 
@@ -203,6 +264,23 @@ const Library = () => {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setTypeFilter('all');
+    setDateFilter('all');
+    setSelectedTags([]);
+  };
+
+  const hasActiveFilters = searchQuery !== '' || typeFilter !== 'all' || dateFilter !== 'all' || selectedTags.length > 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-6xl mx-auto">
@@ -222,6 +300,137 @@ const Library = () => {
             Upload to Library
           </Button>
         </div>
+
+        {/* Search and Filter Section */}
+        <Card className="mb-6 bg-white/80 backdrop-blur-sm border-blue-200">
+          <CardContent className="p-4">
+            {/* Search Bar */}
+            <div className="flex gap-3 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search documents, authors, or tags..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className={showFilters ? "bg-blue-50 border-blue-300" : ""}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+                {hasActiveFilters && <Badge className="ml-2 h-4 w-4 rounded-full p-0" />}
+              </Button>
+              {hasActiveFilters && (
+                <Button variant="outline" onClick={clearAllFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="space-y-4 border-t pt-4">
+                {/* Type and Date Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Document Type
+                    </label>
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {documentTypes.map(type => (
+                          <SelectItem key={type} value={type}>
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Upload Date
+                    </label>
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="week">Past Week</SelectItem>
+                        <SelectItem value="month">Past Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Tag Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    Tags
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {allTags.map(tag => (
+                      <Button
+                        key={tag}
+                        size="sm"
+                        variant={selectedTags.includes(tag) ? "default" : "outline"}
+                        className="h-7 text-xs"
+                        onClick={() => toggleTag(tag)}
+                      >
+                        {tag}
+                        {selectedTags.includes(tag) && (
+                          <X className="h-3 w-3 ml-1" />
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Active Filters Summary */}
+                {hasActiveFilters && (
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="text-sm font-medium text-blue-800 mb-2">Active Filters:</div>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {searchQuery && (
+                        <Badge variant="secondary">Search: "{searchQuery}"</Badge>
+                      )}
+                      {typeFilter !== 'all' && (
+                        <Badge variant="secondary">Type: {typeFilter}</Badge>
+                      )}
+                      {dateFilter !== 'all' && (
+                        <Badge variant="secondary">Date: {dateFilter}</Badge>
+                      )}
+                      {selectedTags.map(tag => (
+                        <Badge key={tag} variant="secondary">Tag: {tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Results Summary */}
+        {hasActiveFilters && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {filteredDocuments.length} of {documents.length} documents
+            {libraryData.length === 0 && " (no matches found)"}
+          </div>
+        )}
 
         <div className="space-y-6">
           {libraryData.map((shelf) => (
@@ -270,8 +479,29 @@ const Library = () => {
                               </div>
                               <FileText className="h-6 w-6 text-blue-500 flex-shrink-0 ml-3" />
                             </div>
-                          </CardHeader>
+                           </CardHeader>
                            <CardContent>
+                             {/* Document type and tags */}
+                             <div className="mb-3">
+                               <div className="flex items-center gap-2 mb-2">
+                                 <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                   {doc.type.charAt(0).toUpperCase() + doc.type.slice(1)}
+                                 </Badge>
+                               </div>
+                               <div className="flex flex-wrap gap-1">
+                                 {doc.tags.slice(0, 3).map(tag => (
+                                   <Badge key={tag} variant="secondary" className="text-xs">
+                                     {tag}
+                                   </Badge>
+                                 ))}
+                                 {doc.tags.length > 3 && (
+                                   <Badge variant="secondary" className="text-xs">
+                                     +{doc.tags.length - 3} more
+                                   </Badge>
+                                 )}
+                               </div>
+                             </div>
+
                              {/* Cross-course badges */}
                              {doc.courses.length > 1 && (
                                <div className="mb-3">
