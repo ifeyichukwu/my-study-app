@@ -3,11 +3,13 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, FileText, ChevronDown, ChevronUp, Plus, Link2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BookOpen, FileText, ChevronDown, ChevronUp, Plus, Link2, Video, ExternalLink, FileIcon, Trash2, Clock } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import UploadDocumentModal from '@/components/UploadDocumentModal';
 
-// Enhanced data structure for cross-course linking
+// Enhanced data structure with resource tracking
 const initialDocuments = [
   {
     id: 1,
@@ -17,6 +19,22 @@ const initialDocuments = [
     fileSize: "3.2 MB",
     pages: 189,
     courses: ["ECE 319"],
+    resources: [
+      {
+        id: 1,
+        type: "video",
+        title: "Data Structures Explained",
+        url: "https://youtube.com/watch?v=example1",
+        addedAt: "2024-06-15T10:30:00Z"
+      },
+      {
+        id: 2,
+        type: "research",
+        title: "Big O Notation Research Paper",
+        url: "https://arxiv.org/example",
+        addedAt: "2024-06-14T15:45:00Z"
+      }
+    ]
   },
   {
     id: 2,
@@ -25,7 +43,16 @@ const initialDocuments = [
     uploadDate: "2024-06-08",
     fileSize: "2.8 MB",
     pages: 245,
-    courses: ["ECE 319", "CS 101"], // Cross-linked document
+    courses: ["ECE 319", "CS 101"],
+    resources: [
+      {
+        id: 3,
+        type: "pdf",
+        title: "Algorithm Analysis Supplement",
+        url: "https://example.com/algo-analysis.pdf",
+        addedAt: "2024-06-10T09:20:00Z"
+      }
+    ]
   },
   {
     id: 3,
@@ -35,6 +62,7 @@ const initialDocuments = [
     fileSize: "2.4 MB",
     pages: 245,
     courses: ["ECE 320"],
+    resources: []
   },
   {
     id: 4,
@@ -44,6 +72,15 @@ const initialDocuments = [
     fileSize: "1.8 MB",
     pages: 156,
     courses: ["CS 101"],
+    resources: [
+      {
+        id: 4,
+        type: "video",
+        title: "TCP/IP Explained",
+        url: "https://youtube.com/watch?v=example2",
+        addedAt: "2024-06-12T14:15:00Z"
+      }
+    ]
   },
   {
     id: 5,
@@ -52,7 +89,8 @@ const initialDocuments = [
     uploadDate: "2024-06-05",
     fileSize: "4.1 MB",
     pages: 312,
-    courses: ["CS 101", "ECE 320"], // Cross-linked document
+    courses: ["CS 101", "ECE 320"],
+    resources: []
   },
 ];
 
@@ -76,6 +114,8 @@ const Library = () => {
   const [documents, setDocuments] = useState(initialDocuments);
   const [courses] = useState(initialCourses);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [showAddResource, setShowAddResource] = useState<number | null>(null);
+  const [newResource, setNewResource] = useState({ type: 'video', title: '', url: '' });
 
   // Generate library data from documents and courses
   const libraryData = useMemo(() => {
@@ -100,7 +140,8 @@ const Library = () => {
       const newDoc = {
         ...newDocument,
         id: Date.now(),
-        courses: [courseCode]
+        courses: [courseCode],
+        resources: []
       };
       setDocuments(prev => [...prev, newDoc]);
     }
@@ -116,6 +157,50 @@ const Library = () => {
       }
       return doc;
     }));
+  };
+
+  const addResource = (docId: number) => {
+    if (!newResource.title || !newResource.url) return;
+    
+    setDocuments(prev => prev.map(doc => {
+      if (doc.id === docId) {
+        const resource = {
+          id: Date.now(),
+          type: newResource.type,
+          title: newResource.title,
+          url: newResource.url,
+          addedAt: new Date().toISOString()
+        };
+        return { ...doc, resources: [...doc.resources, resource] };
+      }
+      return doc;
+    }));
+    
+    setNewResource({ type: 'video', title: '', url: '' });
+    setShowAddResource(null);
+  };
+
+  const removeResource = (docId: number, resourceId: number) => {
+    setDocuments(prev => prev.map(doc => {
+      if (doc.id === docId) {
+        return { ...doc, resources: doc.resources.filter(r => r.id !== resourceId) };
+      }
+      return doc;
+    }));
+  };
+
+  const getResourceIcon = (type: string) => {
+    switch (type) {
+      case 'video': return <Video className="h-3 w-3" />;
+      case 'pdf': return <FileIcon className="h-3 w-3" />;
+      case 'research': return <ExternalLink className="h-3 w-3" />;
+      default: return <ExternalLink className="h-3 w-3" />;
+    }
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -233,26 +318,133 @@ const Library = () => {
                                  <FileText className="mr-1 h-3 w-3" />
                                  View
                                </Button>
-                             </div>
-                             
-                             {/* Course linking controls */}
-                             <div className="border-t pt-3">
-                               <div className="text-xs text-gray-500 mb-2">Link to courses:</div>
-                               <div className="flex flex-wrap gap-1">
-                                 {courses.map(course => (
-                                   <Button
-                                     key={course.courseCode}
-                                     size="sm"
-                                     variant={doc.courses.includes(course.courseCode) ? "default" : "outline"}
-                                     className="text-xs h-6 px-2"
-                                     onClick={() => toggleDocumentCourse(doc.id, course.courseCode)}
-                                     disabled={doc.courses.includes(course.courseCode) && doc.courses.length === 1}
-                                   >
-                                     {course.courseCode}
-                                   </Button>
-                                 ))}
-                               </div>
-                             </div>
+                              </div>
+                              
+                              {/* Resource tracking section */}
+                              <div className="border-t pt-3 mb-3">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-xs text-gray-500">Resources ({doc.resources.length}):</div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 px-2 text-xs"
+                                    onClick={() => setShowAddResource(showAddResource === doc.id ? null : doc.id)}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Add
+                                  </Button>
+                                </div>
+                                
+                                {/* Existing resources */}
+                                {doc.resources.length > 0 && (
+                                  <div className="space-y-2 mb-3">
+                                    {doc.resources.map(resource => (
+                                      <div key={resource.id} className="flex items-center justify-between bg-gray-50 rounded p-2">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            {getResourceIcon(resource.type)}
+                                            <Badge variant="outline" className="text-xs">
+                                              {resource.type}
+                                            </Badge>
+                                          </div>
+                                          <div className="text-xs font-medium text-gray-800 truncate">
+                                            {resource.title}
+                                          </div>
+                                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                                            <Clock className="h-3 w-3" />
+                                            {formatTimestamp(resource.addedAt)}
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-1 ml-2">
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 w-6 p-0"
+                                            onClick={() => window.open(resource.url, '_blank')}
+                                          >
+                                            <ExternalLink className="h-3 w-3" />
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                            onClick={() => removeResource(doc.id, resource.id)}
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                {/* Add resource form */}
+                                {showAddResource === doc.id && (
+                                  <div className="space-y-2 bg-blue-50 p-3 rounded">
+                                    <Select
+                                      value={newResource.type}
+                                      onValueChange={(value) => setNewResource(prev => ({ ...prev, type: value }))}
+                                    >
+                                      <SelectTrigger className="h-8">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="video">Video Link</SelectItem>
+                                        <SelectItem value="research">Research Link</SelectItem>
+                                        <SelectItem value="pdf">PDF Link</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Input
+                                      placeholder="Resource title"
+                                      className="h-8"
+                                      value={newResource.title}
+                                      onChange={(e) => setNewResource(prev => ({ ...prev, title: e.target.value }))}
+                                    />
+                                    <Input
+                                      placeholder="Resource URL"
+                                      className="h-8"
+                                      value={newResource.url}
+                                      onChange={(e) => setNewResource(prev => ({ ...prev, url: e.target.value }))}
+                                    />
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="flex-1 h-7"
+                                        onClick={() => addResource(doc.id)}
+                                      >
+                                        Add Resource
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7"
+                                        onClick={() => setShowAddResource(null)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Course linking controls */}
+                              <div className="border-t pt-3">
+                                <div className="text-xs text-gray-500 mb-2">Link to courses:</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {courses.map(course => (
+                                    <Button
+                                      key={course.courseCode}
+                                      size="sm"
+                                      variant={doc.courses.includes(course.courseCode) ? "default" : "outline"}
+                                      className="text-xs h-6 px-2"
+                                      onClick={() => toggleDocumentCourse(doc.id, course.courseCode)}
+                                      disabled={doc.courses.includes(course.courseCode) && doc.courses.length === 1}
+                                    >
+                                      {course.courseCode}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
                            </CardContent>
                         </Card>
                       ))}
