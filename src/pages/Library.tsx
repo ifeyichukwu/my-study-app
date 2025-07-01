@@ -1,77 +1,89 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, FileText, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BookOpen, FileText, ChevronDown, ChevronUp, Plus, Link2 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import UploadDocumentModal from '@/components/UploadDocumentModal';
 
-// Mock data organized by courses/shelves
-const initialLibraryData = [
+// Enhanced data structure for cross-course linking
+const initialDocuments = [
+  {
+    id: 1,
+    title: "DS & A for University Beginners",
+    author: "Thomas H. Cormen",
+    uploadDate: "2024-06-10",
+    fileSize: "3.2 MB",
+    pages: 189,
+    courses: ["ECE 319"],
+  },
+  {
+    id: 2,
+    title: "Advanced Algorithms Handbook",
+    author: "Robert Sedgewick",
+    uploadDate: "2024-06-08",
+    fileSize: "2.8 MB",
+    pages: 245,
+    courses: ["ECE 319", "CS 101"], // Cross-linked document
+  },
+  {
+    id: 3,
+    title: "Electronic Transmission Fundamentals",
+    author: "R.K Bjunder",
+    uploadDate: "2024-06-12",
+    fileSize: "2.4 MB",
+    pages: 245,
+    courses: ["ECE 320"],
+  },
+  {
+    id: 4,
+    title: "Network Protocols Guide",
+    author: "A.S Tanenbaum",
+    uploadDate: "2024-06-08",
+    fileSize: "1.8 MB",
+    pages: 156,
+    courses: ["CS 101"],
+  },
+  {
+    id: 5,
+    title: "TCP/IP Protocol Suite",
+    author: "Behrouz A. Forouzan",
+    uploadDate: "2024-06-05",
+    fileSize: "4.1 MB",
+    pages: 312,
+    courses: ["CS 101", "ECE 320"], // Cross-linked document
+  },
+];
+
+const initialCourses = [
   {
     courseCode: "ECE 319",
     courseName: "Data Structures and Algorithms",
-    documents: [
-      {
-        id: 1,
-        title: "DS & A for University Beginners",
-        author: "Thomas H. Cormen",
-        uploadDate: "2024-06-10",
-        fileSize: "3.2 MB",
-        pages: 189,
-      },
-      {
-        id: 2,
-        title: "Advanced Algorithms Handbook",
-        author: "Robert Sedgewick",
-        uploadDate: "2024-06-08",
-        fileSize: "2.8 MB",
-        pages: 245,
-      },
-    ]
   },
   {
-    courseCode: "ECE 320",
+    courseCode: "ECE 320", 
     courseName: "Introduction to Electronic Transmission",
-    documents: [
-      {
-        id: 3,
-        title: "Electronic Transmission Fundamentals",
-        author: "R.K Bjunder",
-        uploadDate: "2024-06-12",
-        fileSize: "2.4 MB",
-        pages: 245,
-      },
-    ]
   },
   {
     courseCode: "CS 101",
     courseName: "Computer Networks",
-    documents: [
-      {
-        id: 4,
-        title: "Network Protocols Guide",
-        author: "A.S Tanenbaum",
-        uploadDate: "2024-06-08",
-        fileSize: "1.8 MB",
-        pages: 156,
-      },
-      {
-        id: 5,
-        title: "TCP/IP Protocol Suite",
-        author: "Behrouz A. Forouzan",
-        uploadDate: "2024-06-05",
-        fileSize: "4.1 MB",
-        pages: 312,
-      },
-    ]
   },
 ];
 
 const Library = () => {
   const [openShelves, setOpenShelves] = useState<string[]>([]);
-  const [libraryData, setLibraryData] = useState(initialLibraryData);
+  const [documents, setDocuments] = useState(initialDocuments);
+  const [courses] = useState(initialCourses);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
+  // Generate library data from documents and courses
+  const libraryData = useMemo(() => {
+    return courses.map(course => ({
+      ...course,
+      documents: documents.filter(doc => doc.courses.includes(course.courseCode))
+    }));
+  }, [documents, courses]);
 
   const toggleShelf = (courseCode: string) => {
     setOpenShelves(prev => 
@@ -85,38 +97,25 @@ const Library = () => {
     const courseCode = newDocument.courseCode;
     
     if (courseCode) {
-      // Add to existing course shelf
-      setLibraryData(prev => prev.map(shelf => 
-        shelf.courseCode === courseCode 
-          ? {
-              ...shelf,
-              documents: [...shelf.documents, { ...newDocument, id: Date.now() }]
-            }
-          : shelf
-      ));
-    } else {
-      // If no course code provided, add to a general shelf (you could customize this logic)
-      setLibraryData(prev => {
-        const generalShelf = prev.find(shelf => shelf.courseCode === "GENERAL");
-        if (generalShelf) {
-          return prev.map(shelf => 
-            shelf.courseCode === "GENERAL"
-              ? {
-                  ...shelf,
-                  documents: [...shelf.documents, { ...newDocument, id: Date.now() }]
-                }
-              : shelf
-          );
-        } else {
-          // Create a new general shelf if it doesn't exist
-          return [...prev, {
-            courseCode: "GENERAL",
-            courseName: "General Documents",
-            documents: [{ ...newDocument, id: Date.now() }]
-          }];
-        }
-      });
+      const newDoc = {
+        ...newDocument,
+        id: Date.now(),
+        courses: [courseCode]
+      };
+      setDocuments(prev => [...prev, newDoc]);
     }
+  };
+
+  const toggleDocumentCourse = (docId: number, courseCode: string) => {
+    setDocuments(prev => prev.map(doc => {
+      if (doc.id === docId) {
+        const courses = doc.courses.includes(courseCode)
+          ? doc.courses.filter(c => c !== courseCode)
+          : [...doc.courses, courseCode];
+        return { ...doc, courses };
+      }
+      return doc;
+    }));
   };
 
   return (
@@ -187,36 +186,74 @@ const Library = () => {
                               <FileText className="h-6 w-6 text-blue-500 flex-shrink-0 ml-3" />
                             </div>
                           </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2 text-sm text-gray-600 mb-4">
-                              <div className="flex justify-between">
-                                <span>Pages:</span>
-                                <span className="font-medium">{doc.pages}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Size:</span>
-                                <span className="font-medium">{doc.fileSize}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Uploaded:</span>
-                                <span className="font-medium">{doc.uploadDate}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                              >
-                                <BookOpen className="mr-1 h-3 w-3" />
-                                Study
-                              </Button>
-                              <Button size="sm" variant="outline" className="border-blue-300">
-                                <FileText className="mr-1 h-3 w-3" />
-                                View
-                              </Button>
-                            </div>
-                          </CardContent>
+                           <CardContent>
+                             {/* Cross-course badges */}
+                             {doc.courses.length > 1 && (
+                               <div className="mb-3">
+                                 <div className="flex items-center gap-2 mb-2">
+                                   <Link2 className="h-3 w-3 text-blue-500" />
+                                   <span className="text-xs text-blue-600 font-medium">Also in:</span>
+                                 </div>
+                                 <div className="flex flex-wrap gap-1">
+                                   {doc.courses
+                                     .filter(courseCode => courseCode !== shelf.courseCode)
+                                     .map(courseCode => (
+                                       <Badge key={courseCode} variant="secondary" className="text-xs">
+                                         {courseCode}
+                                       </Badge>
+                                     ))}
+                                 </div>
+                               </div>
+                             )}
+                             
+                             <div className="space-y-2 text-sm text-gray-600 mb-4">
+                               <div className="flex justify-between">
+                                 <span>Pages:</span>
+                                 <span className="font-medium">{doc.pages}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span>Size:</span>
+                                 <span className="font-medium">{doc.fileSize}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span>Uploaded:</span>
+                                 <span className="font-medium">{doc.uploadDate}</span>
+                               </div>
+                             </div>
+                             
+                             <div className="flex gap-2 mb-3">
+                               <Button 
+                                 size="sm" 
+                                 className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                               >
+                                 <BookOpen className="mr-1 h-3 w-3" />
+                                 Study
+                               </Button>
+                               <Button size="sm" variant="outline" className="border-blue-300">
+                                 <FileText className="mr-1 h-3 w-3" />
+                                 View
+                               </Button>
+                             </div>
+                             
+                             {/* Course linking controls */}
+                             <div className="border-t pt-3">
+                               <div className="text-xs text-gray-500 mb-2">Link to courses:</div>
+                               <div className="flex flex-wrap gap-1">
+                                 {courses.map(course => (
+                                   <Button
+                                     key={course.courseCode}
+                                     size="sm"
+                                     variant={doc.courses.includes(course.courseCode) ? "default" : "outline"}
+                                     className="text-xs h-6 px-2"
+                                     onClick={() => toggleDocumentCourse(doc.id, course.courseCode)}
+                                     disabled={doc.courses.includes(course.courseCode) && doc.courses.length === 1}
+                                   >
+                                     {course.courseCode}
+                                   </Button>
+                                 ))}
+                               </div>
+                             </div>
+                           </CardContent>
                         </Card>
                       ))}
                     </div>
