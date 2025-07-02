@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BookOpen, FileText, ChevronDown, ChevronUp, Plus, Link2, Video, ExternalLink, FileIcon, Trash2, Clock, Search, Filter, Calendar, Tag, X } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import UploadDocumentModal from '@/components/UploadDocumentModal';
+import { useStudySessions } from '@/hooks/useStudySessions';
 
 // Enhanced data structure with document types, tags, and resource tracking
 const initialDocuments = [
@@ -126,6 +127,9 @@ const Library = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [showAddResource, setShowAddResource] = useState<number | null>(null);
   const [newResource, setNewResource] = useState({ type: 'video', title: '', url: '' });
+  
+  // Study session tracking
+  const { recordDocumentView, recordResourceAccess } = useStudySessions();
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -536,19 +540,25 @@ const Library = () => {
                                </div>
                              </div>
                              
-                             <div className="flex gap-2 mb-3">
-                               <Button 
-                                 size="sm" 
-                                 className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                               >
-                                 <BookOpen className="mr-1 h-3 w-3" />
-                                 Study
-                               </Button>
-                               <Button size="sm" variant="outline" className="border-blue-300">
-                                 <FileText className="mr-1 h-3 w-3" />
-                                 View
-                               </Button>
-                              </div>
+                              <div className="flex gap-2 mb-3">
+                                <Button 
+                                  size="sm" 
+                                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                  onClick={() => recordDocumentView(doc.title, doc.id.toString())}
+                                >
+                                  <BookOpen className="mr-1 h-3 w-3" />
+                                  Study
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="border-blue-300"
+                                  onClick={() => recordDocumentView(doc.title, doc.id.toString())}
+                                >
+                                  <FileText className="mr-1 h-3 w-3" />
+                                  View
+                                </Button>
+                               </div>
                               
                               {/* Resource tracking section */}
                               <div className="border-t pt-3 mb-3">
@@ -590,7 +600,10 @@ const Library = () => {
                                             size="sm"
                                             variant="ghost"
                                             className="h-6 w-6 p-0"
-                                            onClick={() => window.open(resource.url, '_blank')}
+                                            onClick={() => {
+                                              recordResourceAccess(resource.title, resource.type, doc.id.toString());
+                                              window.open(resource.url, '_blank');
+                                            }}
                                           >
                                             <ExternalLink className="h-3 w-3" />
                                           </Button>

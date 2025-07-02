@@ -51,6 +51,45 @@ export type Database = {
         }
         Relationships: []
       }
+      study_sessions: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          document_title: string
+          duration_minutes: number | null
+          id: string
+          metadata: Json | null
+          score: string | null
+          session_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          document_title: string
+          duration_minutes?: number | null
+          id?: string
+          metadata?: Json | null
+          score?: string | null
+          session_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          document_title?: string
+          duration_minutes?: number | null
+          id?: string
+          metadata?: Json | null
+          score?: string | null
+          session_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
