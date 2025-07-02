@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BookOpen, Brain, Home, Library, Users, FileQuestion, User, LogIn, Menu } from 'lucide-react';
+import { BookOpen, Brain, Home, Library, Users, FileQuestion, User, LogIn, Menu, Bot } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -25,6 +25,7 @@ const Navigation = () => {
     { path: '/quiz-generator', label: 'Quiz Generator', icon: Brain },
     { path: '/past-questions', label: 'Past Questions', icon: FileQuestion },
     { path: '/group-study', label: 'Group Study', icon: Users },
+    { path: '/study-bot', label: 'Study Coach', icon: Bot },
   ];
 
   const handleNavigation = (path: string) => {
