@@ -1,14 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, User, Send, Loader2, Brain, BookOpen, Target, TrendingUp } from 'lucide-react';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { 
+  Bot, 
+  User, 
+  Send, 
+  Loader2, 
+  Plus, 
+  MoreHorizontal, 
+  Share, 
+  Edit, 
+  Archive, 
+  Trash2 
+} from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { useStudySessions } from '@/hooks/useStudySessions';
 import { useProfile } from '@/hooks/useProfile';
+import { useChatSessions, ChatSession } from '@/hooks/useChatSessions';
 
 interface Message {
   id: string;
@@ -17,21 +33,32 @@ interface Message {
   timestamp: Date;
 }
 
-interface StudyFramework {
-  type: string;
-  title: string;
-  description: string;
-  actions: string[];
-}
-
 const StudyBot = () => {
   const { user } = useAuth();
-  const { studySessions } = useStudySessions();
   const { profile } = useProfile();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: `Hello! I'm your AI Study Coach. I'm here to help you create personalized study frameworks, analyze your learning patterns, and guide you toward academic success. 
+  const { 
+    sessions, 
+    createSession, 
+    updateSession, 
+    deleteSession, 
+    archiveSession 
+  } = useChatSessions();
+  
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+
+  // Initialize with welcome message when no session is selected
+  useEffect(() => {
+    if (!currentSessionId) {
+      setMessages([
+        {
+          id: '1',
+          content: `Hello! I'm your AI Study Coach. I'm here to help you create personalized study frameworks, analyze your learning patterns, and guide you toward academic success. 
 
 What would you like to work on today? I can help you with:
 • Creating custom study schedules
@@ -39,14 +66,22 @@ What would you like to work on today? I can help you with:
 • Suggesting learning techniques
 • Setting academic goals
 • Reviewing your progress`,
-      role: 'assistant',
-      timestamp: new Date(),
-    },
-  ]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [suggestedFrameworks, setSuggestedFrameworks] = useState<StudyFramework[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null);
+          role: 'assistant',
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }, [currentSessionId]);
+
+  // Load messages when session changes
+  useEffect(() => {
+    if (currentSessionId) {
+      const session = sessions.find(s => s.id === currentSessionId);
+      if (session) {
+        setMessages(session.messages || []);
+      }
+    }
+  }, [currentSessionId, sessions]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -54,15 +89,22 @@ What would you like to work on today? I can help you with:
     }
   }, [messages]);
 
-  const quickActions = [
-    { label: 'Analyze my study patterns', icon: TrendingUp },
-    { label: 'Create study schedule', icon: Target },
-    { label: 'Review recent sessions', icon: BookOpen },
-    { label: 'Suggest study techniques', icon: Brain },
-  ];
-
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
+
+    let sessionId = currentSessionId;
+    
+    // Create new session if none selected
+    if (!sessionId) {
+      try {
+        const newSession = await createSession.mutateAsync('New Chat');
+        sessionId = newSession.id;
+        setCurrentSessionId(sessionId);
+      } catch (error) {
+        console.error('Failed to create session:', error);
+        return;
+      }
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -71,14 +113,13 @@ What would you like to work on today? I can help you with:
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputValue('');
     setIsLoading(true);
 
     try {
-      // Prepare context for the AI
       const context = {
-        recentSessions: studySessions.slice(0, 5),
         profile: profile,
         userMessage: inputValue,
       };
@@ -104,11 +145,16 @@ What would you like to work on today? I can help you with:
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const finalMessages = [...newMessages, assistantMessage];
+      setMessages(finalMessages);
 
-      // If the AI suggests frameworks, update the suggestions
-      if (data.frameworks) {
-        setSuggestedFrameworks(data.frameworks);
+      // Save messages to session
+      if (sessionId) {
+        updateSession.mutate({ 
+          id: sessionId, 
+          messages: finalMessages,
+          title: finalMessages.length === 2 ? inputValue.slice(0, 50) : undefined
+        });
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -124,8 +170,39 @@ What would you like to work on today? I can help you with:
     }
   };
 
-  const handleQuickAction = (action: string) => {
-    setInputValue(action);
+  const handleNewChat = async () => {
+    try {
+      const newSession = await createSession.mutateAsync('New Chat');
+      setCurrentSessionId(newSession.id);
+      setMessages([]);
+    } catch (error) {
+      console.error('Failed to create new chat:', error);
+    }
+  };
+
+  const handleSessionSelect = (session: ChatSession) => {
+    setCurrentSessionId(session.id);
+  };
+
+  const handleRenameSession = (sessionId: string, currentTitle: string) => {
+    setEditingSessionId(sessionId);
+    setEditingTitle(currentTitle);
+  };
+
+  const handleSaveRename = () => {
+    if (editingSessionId && editingTitle.trim()) {
+      updateSession.mutate({ 
+        id: editingSessionId, 
+        title: editingTitle.trim() 
+      });
+    }
+    setEditingSessionId(null);
+    setEditingTitle('');
+  };
+
+  const handleShareSession = (sessionId: string) => {
+    // For now, just copy the session ID to clipboard
+    navigator.clipboard.writeText(`Session: ${sessionId}`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -135,188 +212,186 @@ What would you like to work on today? I can help you with:
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            AI Study Coach
-          </h1>
-          <p className="text-xl text-gray-600">
-            Get personalized study recommendations and frameworks powered by AI
-          </p>
+  // Sidebar component
+  const ChatSidebar = () => (
+    <div className="w-64 bg-sidebar border-r border-sidebar-border h-screen flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-sidebar-border">
+        <Button
+          onClick={handleNewChat}
+          className="w-full flex items-center gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+        >
+          <Plus className="h-4 w-4" />
+          New Chat
+        </Button>
+      </div>
+
+      {/* Sessions List */}
+      <ScrollArea className="flex-1 p-2">
+        <div className="space-y-1">
+          {sessions.map((session) => (
+            <div
+              key={session.id}
+              className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                currentSessionId === session.id
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  : 'hover:bg-sidebar-accent/50'
+              }`}
+              onClick={() => handleSessionSelect(session)}
+            >
+              <div className="flex-1 min-w-0">
+                {editingSessionId === session.id ? (
+                  <Input
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onBlur={handleSaveRename}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSaveRename()}
+                    className="h-6 text-sm bg-transparent border-none p-0 focus:ring-0"
+                    autoFocus
+                  />
+                ) : (
+                  <p className="text-sm truncate text-sidebar-foreground">
+                    {session.title}
+                  </p>
+                )}
+                <p className="text-xs text-sidebar-foreground/60">
+                  {new Date(session.updated_at).toLocaleDateString()}
+                </p>
+              </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                  >
+                    <MoreHorizontal className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleShareSession(session.id)}>
+                    <Share className="h-3 w-3 mr-2" />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleRenameSession(session.id, session.title)}>
+                    <Edit className="h-3 w-3 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => archiveSession.mutate(session.id)}>
+                    <Archive className="h-3 w-3 mr-2" />
+                    Archive
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => deleteSession.mutate(session.id)}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ))}
         </div>
+      </ScrollArea>
+    </div>
+  );
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chat Interface */}
-          <div className="lg:col-span-2">
-            <Card className="h-[600px] bg-white/80 backdrop-blur-sm border-blue-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-gray-800">
-                  <Bot className="h-6 w-6 text-blue-600" />
-                  Study Coach Chat
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 h-full flex flex-col">
-                {/* Messages Area */}
-                <ScrollArea ref={scrollRef} className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex gap-3 ${
-                          message.role === 'user' ? 'justify-end' : 'justify-start'
-                        }`}
-                      >
-                        {message.role === 'assistant' && (
-                          <Avatar className="h-8 w-8 bg-blue-600">
-                            <AvatarFallback>
-                              <Bot className="h-4 w-4 text-white" />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div
-                          className={`max-w-[80%] rounded-lg p-3 ${
-                            message.role === 'user'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          <p className="whitespace-pre-wrap">{message.content}</p>
-                          <div className="text-xs opacity-70 mt-1">
-                            {message.timestamp.toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                        </div>
-                        {message.role === 'user' && (
-                          <Avatar className="h-8 w-8 bg-gray-600">
-                            <AvatarFallback>
-                              <User className="h-4 w-4 text-white" />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
-                    ))}
-                    {isLoading && (
-                      <div className="flex gap-3 justify-start">
-                        <Avatar className="h-8 w-8 bg-blue-600">
-                          <AvatarFallback>
-                            <Bot className="h-4 w-4 text-white" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="bg-gray-100 rounded-lg p-3">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-
-                {/* Input Area */}
-                <div className="p-4 border-t">
-                  <div className="flex gap-2">
-                    <Input
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask me about study strategies, schedules, or analysis..."
-                      className="flex-1"
-                      disabled={isLoading}
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={isLoading || !inputValue.trim()}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <ChatSidebar />
+        
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="h-14 border-b border-border flex items-center px-4">
+            <SidebarTrigger className="mr-4" />
+            <h1 className="text-lg font-semibold text-foreground">
+              AI Study Coach
+            </h1>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg text-gray-800">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {quickActions.map((action, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className="w-full justify-start text-left h-auto p-3"
-                      onClick={() => handleQuickAction(action.label)}
-                    >
-                      <action.icon className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span className="text-sm">{action.label}</span>
-                    </Button>
-                  ))}
+          {/* Chat Messages */}
+          <ScrollArea ref={scrollRef} className="flex-1 p-4">
+            <div className="max-w-3xl mx-auto space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-3 ${
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  {message.role === 'assistant' && (
+                    <Avatar className="h-8 w-8 bg-primary">
+                      <AvatarFallback>
+                        <Bot className="h-4 w-4 text-primary-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    <div className="text-xs opacity-70 mt-1">
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                  {message.role === 'user' && (
+                    <Avatar className="h-8 w-8 bg-secondary">
+                      <AvatarFallback>
+                        <User className="h-4 w-4 text-secondary-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Study Insights */}
-            <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg text-gray-800">Your Study Insights</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Recent Sessions</span>
-                    <Badge variant="secondary">{studySessions.length}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Course Focus</span>
-                    <Badge variant="outline">{profile?.course_of_study || 'Not set'}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Study Type</span>
-                    <Badge variant="outline">{profile?.student_type || 'Not set'}</Badge>
+              ))}
+              {isLoading && (
+                <div className="flex gap-3 justify-start">
+                  <Avatar className="h-8 w-8 bg-primary">
+                    <AvatarFallback>
+                      <Bot className="h-4 w-4 text-primary-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-lg p-3">
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
+          </ScrollArea>
 
-            {/* Suggested Frameworks */}
-            {suggestedFrameworks.length > 0 && (
-              <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg text-gray-800">Suggested Frameworks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {suggestedFrameworks.map((framework, index) => (
-                      <div key={index} className="border rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline">{framework.type}</Badge>
-                        </div>
-                        <h4 className="font-medium text-sm mb-1">{framework.title}</h4>
-                        <p className="text-xs text-gray-600 mb-2">{framework.description}</p>
-                        <div className="flex flex-wrap gap-1">
-                          {framework.actions.slice(0, 2).map((action, actionIndex) => (
-                            <Badge key={actionIndex} variant="secondary" className="text-xs">
-                              {action}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          {/* Input Area */}
+          <div className="p-4 border-t border-border">
+            <div className="max-w-3xl mx-auto flex gap-2">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Message AI Study Coach..."
+                className="flex-1"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={isLoading || !inputValue.trim()}
+                size="sm"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
