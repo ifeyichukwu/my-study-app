@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useChatSessions, ChatSession } from '@/hooks/useChatSessions';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -124,19 +125,13 @@ What would you like to work on today? I can help you with:
         userMessage: inputValue,
       };
 
-      const response = await fetch('https://goyrkevbtxchqobvwogq.supabase.co/functions/v1/study-coach', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(context),
+      const { data, error } = await supabase.functions.invoke('study-coach', {
+        body: context,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
+      if (error) {
+        throw new Error(`Failed to get AI response: ${error.message}`);
       }
-
-      const data = await response.json();
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
