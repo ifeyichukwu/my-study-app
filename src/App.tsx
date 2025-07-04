@@ -12,6 +12,8 @@ import QuizGenerator from "./pages/QuizGenerator";
 import GroupStudy from "./pages/GroupStudy";
 import PastQuestions from "./pages/PastQuestions";
 import StudyBot from "./pages/StudyBot";
+import CoachMi from "./pages/CoachMi";
+import LearnMi from "./pages/LearnMi";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -34,6 +36,8 @@ const App = () => (
               <Route path="/past-questions" element={<PastQuestions />} />
               <Route path="/group-study" element={<GroupStudy />} />
               <Route path="/study-bot" element={<StudyBot />} />
+              <Route path="/coach-mi" element={<CoachMi />} />
+              <Route path="/learn-mi" element={<LearnMi />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
