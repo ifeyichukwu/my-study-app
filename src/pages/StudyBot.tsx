@@ -95,8 +95,8 @@ What would you like to work on today? I can help you with:
 
     let sessionId = currentSessionId;
     
-    // Create new session if none selected
-    if (!sessionId) {
+    // Create new session if none selected and user is authenticated
+    if (!sessionId && user) {
       try {
         const newSession = await createSession.mutateAsync('New Chat');
         sessionId = newSession.id;
@@ -143,8 +143,8 @@ What would you like to work on today? I can help you with:
       const finalMessages = [...newMessages, assistantMessage];
       setMessages(finalMessages);
 
-      // Save messages to session
-      if (sessionId) {
+      // Save messages to session if user is authenticated
+      if (sessionId && user) {
         updateSession.mutate({ 
           id: sessionId, 
           messages: finalMessages,
@@ -166,12 +166,18 @@ What would you like to work on today? I can help you with:
   };
 
   const handleNewChat = async () => {
-    try {
-      const newSession = await createSession.mutateAsync('New Chat');
-      setCurrentSessionId(newSession.id);
+    if (user) {
+      try {
+        const newSession = await createSession.mutateAsync('New Chat');
+        setCurrentSessionId(newSession.id);
+        setMessages([]);
+      } catch (error) {
+        console.error('Failed to create new chat:', error);
+      }
+    } else {
+      // For non-authenticated users, just reset the chat
+      setCurrentSessionId(null);
       setMessages([]);
-    } catch (error) {
-      console.error('Failed to create new chat:', error);
     }
   };
 
@@ -306,6 +312,11 @@ What would you like to work on today? I can help you with:
             <h1 className="text-lg font-semibold text-foreground">
               AI Study Coach
             </h1>
+            {!user && (
+              <div className="ml-auto text-sm text-muted-foreground">
+                <span>Sign in to save chat history</span>
+              </div>
+            )}
           </div>
 
           {/* Chat Messages */}
