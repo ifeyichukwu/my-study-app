@@ -75,7 +75,7 @@ const RecentActivity = () => {
         ) : (
           <div className="text-center mt-4">
             <p className="text-sm text-gray-500">
-              Start using Scholar to see your learning progress here!
+              Start using ScholarMi to see your learning progress here!
             </p>
           </div>
         )}

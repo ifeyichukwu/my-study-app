@@ -8,21 +8,21 @@ const Testimonials = () => {
     {
       name: "Sarah Chen",
       role: "Medical Student",
-      content: "Scholar helped me generate targeted quizzes from my anatomy textbooks. My exam scores improved by 25%!",
+      content: "ScholarMi helped me generate targeted quizzes from my anatomy textbooks. My exam scores improved by 25%!",
       icon: GraduationCap,
       rating: 5
     },
     {
       name: "Prof. Martinez",
       role: "History Teacher",
-      content: "I upload my lesson plans and Scholar creates engaging quizzes for my students. Saves me hours every week.",
+      content: "I upload my lesson plans and ScholarMi creates engaging quizzes for my students. Saves me hours every week.",
       icon: BookOpen,
       rating: 5
     },
     {
       name: "Study Group Alpha",
       role: "Engineering Students",
-      content: "We use Scholar to create practice tests from our notes. The AI understands complex topics perfectly.",
+      content: "We use ScholarMi to create practice tests from our notes. The AI understands complex topics perfectly.",
       icon: Users,
       rating: 5
     }

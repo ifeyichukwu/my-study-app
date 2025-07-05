@@ -20,7 +20,7 @@ const Index = () => {
         {/* Hero Section */}
         <div className="text-center mb-8 lg:mb-12">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3 sm:mb-4 leading-tight">
-            Welcome to Scholar
+            Welcome to ScholarMi
           </h1>
           <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-4xl mx-auto mb-6 sm:mb-8 px-4">
             Transform your learning with AI-powered quiz generation. Upload your materials, generate personalized quizzes, and accelerate your educational journey.
@@ -37,7 +37,7 @@ const Index = () => {
                   Upload Your First Document
                 </Button>
                 <div className="w-full sm:w-auto">
-                  <GenerateQuizModal lessonContent="Welcome to Scholar - a platform for AI-powered quiz generation from your study materials." />
+                  <GenerateQuizModal lessonContent="Welcome to ScholarMi - a platform for AI-powered quiz generation from your study materials." />
                 </div>
               </>
             ) : (
@@ -70,7 +70,7 @@ const Index = () => {
               Trusted by Students & Educators Worldwide
             </h2>
             <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Join thousands of learners who have transformed their study experience with Scholar
+              Join thousands of learners who have transformed their study experience with ScholarMi
             </p>
           </div>
           <Testimonials />
