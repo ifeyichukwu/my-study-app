@@ -25,8 +25,7 @@ const Navigation = () => {
     { path: '/quiz-generator', label: 'Quiz Generator', icon: Brain },
     { path: '/past-questions', label: 'Past Questions', icon: FileQuestion },
     { path: '/group-study', label: 'Group Study', icon: Users },
-    { path: '/coach-mi', label: 'CoachMi', icon: Bot },
-    { path: '/learn-mi', label: 'LearnMi', icon: Brain },
+    { path: '/study-bot', label: 'Study Coach', icon: Bot },
   ];
 
   const handleNavigation = (path: string) => {
@@ -48,7 +47,7 @@ const Navigation = () => {
         <div className="flex items-center space-x-2 mr-4 sm:mr-8">
           <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
           <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            ScholarMi
+            Scholar
           </span>
         </div>
         
