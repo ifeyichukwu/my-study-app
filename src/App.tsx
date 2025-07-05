@@ -8,9 +8,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Navigation from "./components/Navigation";
 import Index from "./pages/Index";
 import Library from "./pages/Library";
-import QuizGenerator from "./pages/QuizGenerator";
+import LearnMi from "./pages/LearnMi";
 import GroupStudy from "./pages/GroupStudy";
-import PastQuestions from "./pages/PastQuestions";
 import StudyBot from "./pages/StudyBot";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -30,8 +29,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/library" element={<Library />} />
-              <Route path="/quiz-generator" element={<QuizGenerator />} />
-              <Route path="/past-questions" element={<PastQuestions />} />
+              <Route path="/learn-mi" element={<LearnMi />} />
               <Route path="/group-study" element={<GroupStudy />} />
               <Route path="/study-bot" element={<StudyBot />} />
               <Route path="/auth" element={<Auth />} />

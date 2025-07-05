@@ -22,10 +22,9 @@ const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/library', label: 'Library', icon: Library },
-    { path: '/quiz-generator', label: 'Quiz Generator', icon: Brain },
-    { path: '/past-questions', label: 'Past Questions', icon: FileQuestion },
+    { path: '/learn-mi', label: 'LearnMi', icon: Brain },
     { path: '/group-study', label: 'Group Study', icon: Users },
-    { path: '/study-bot', label: 'Study Coach', icon: Bot },
+    { path: '/study-bot', label: 'CoachMi', icon: Bot },
   ];
 
   const handleNavigation = (path: string) => {
