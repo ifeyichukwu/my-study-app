@@ -1,12 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, MessageCircle, Calendar, BookOpen, Trophy, Clock, Plus, Search } from 'lucide-react';
+import JoinGroupModal from '@/components/JoinGroupModal';
 
 const GroupStudy = () => {
+  const [selectedGroup, setSelectedGroup] = useState<{ name: string; id: string } | null>(null);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  
   const studyGroups = [
     {
+      id: 'bio-001',
       name: "Advanced Biology Study Group",
       subject: "Biology",
       members: 12,
@@ -16,6 +21,7 @@ const GroupStudy = () => {
       status: "active"
     },
     {
+      id: 'math-001',
       name: "Calculus Problem Solvers",
       subject: "Mathematics",
       members: 8,
@@ -25,6 +31,7 @@ const GroupStudy = () => {
       status: "active"
     },
     {
+      id: 'hist-001',
       name: "World History Explorers",
       subject: "History",
       members: 15,
@@ -34,6 +41,7 @@ const GroupStudy = () => {
       status: "scheduled"
     },
     {
+      id: 'phys-001',
       name: "Physics Lab Partners",
       subject: "Physics",
       members: 6,
@@ -43,6 +51,7 @@ const GroupStudy = () => {
       status: "active"
     },
     {
+      id: 'lit-001',
       name: "Literature Discussion Circle",
       subject: "Literature",
       members: 10,
@@ -52,6 +61,7 @@ const GroupStudy = () => {
       status: "scheduled"
     },
     {
+      id: 'chem-001',
       name: "Chemistry Study Crew",
       subject: "Chemistry",
       members: 14,
@@ -61,6 +71,11 @@ const GroupStudy = () => {
       status: "active"
     }
   ];
+
+  const handleJoinGroup = (group: any) => {
+    setSelectedGroup({ name: group.name, id: group.id });
+    setIsJoinModalOpen(true);
+  };
 
   const features = [
     {
@@ -163,7 +178,11 @@ const GroupStudy = () => {
                         {group.nextSession}
                       </span>
                     </div>
-                    <Button size="sm" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700">
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                      onClick={() => handleJoinGroup(group)}
+                    >
                       Join Group
                     </Button>
                   </CardContent>
@@ -186,6 +205,19 @@ const GroupStudy = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Join Group Modal */}
+        {selectedGroup && (
+          <JoinGroupModal
+            isOpen={isJoinModalOpen}
+            onClose={() => {
+              setIsJoinModalOpen(false);
+              setSelectedGroup(null);
+            }}
+            groupName={selectedGroup.name}
+            groupId={selectedGroup.id}
+          />
+        )}
       </div>
     </div>
   );

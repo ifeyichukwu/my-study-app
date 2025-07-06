@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Library from "./pages/Library";
 import LearnMi from "./pages/LearnMi";
 import GroupStudy from "./pages/GroupStudy";
+import GroupChat from "./pages/GroupChat";
 import StudyBot from "./pages/StudyBot";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/library" element={<Library />} />
               <Route path="/learn-mi" element={<LearnMi />} />
               <Route path="/group-study" element={<GroupStudy />} />
+              <Route path="/group-chat/:groupId" element={<GroupChat />} />
               <Route path="/study-bot" element={<StudyBot />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
