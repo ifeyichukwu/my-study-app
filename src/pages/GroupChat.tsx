@@ -8,6 +8,7 @@ import {
   ArrowLeft, 
   Send, 
   Video, 
+  VideoOff,
   Phone, 
   MoreVertical,
   Users,
@@ -37,6 +38,7 @@ const GroupChat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isInCall, setIsInCall] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,6 +112,7 @@ const GroupChat = () => {
   const endCall = () => {
     setIsInCall(false);
     setIsMuted(false);
+    setIsVideoOff(false);
   };
 
   if (!groupData) {
@@ -215,10 +218,34 @@ const GroupChat = () => {
                 <Button
                   variant="ghost"
                   size="lg"
-                  className="rounded-full w-12 h-12 bg-gray-700 hover:bg-gray-600 text-white"
+                  onClick={() => setIsVideoOff(!isVideoOff)}
+                  className={`rounded-full w-12 h-12 ${isVideoOff ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
                 >
-                  <Video className="h-5 w-5" />
+                  {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
                 </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      className="rounded-full w-12 h-12 bg-gray-700 hover:bg-gray-600 text-white"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="bg-white border shadow-lg mb-4">
+                    <DropdownMenuItem className="hover:bg-blue-50">
+                      Share Screen
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-blue-50">
+                      Send Message
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-blue-50">
+                      LearnMi (Group)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
