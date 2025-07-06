@@ -39,6 +39,8 @@ const GroupChat = () => {
   const [isInCall, setIsInCall] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
+  const [participantCount] = useState(3); // Mock participant count
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,6 +115,21 @@ const GroupChat = () => {
     setIsInCall(false);
     setIsMuted(false);
     setIsVideoOff(false);
+    setIsCallMinimized(false);
+  };
+
+  const handleShareScreen = () => {
+    // Mock share screen functionality
+    console.log('Share screen clicked');
+  };
+
+  const handleMinimizeForChat = () => {
+    setIsCallMinimized(true);
+  };
+
+  const handleLearnMiGroup = () => {
+    // Mock LearnMi group functionality
+    console.log('LearnMi Group clicked');
   };
 
   if (!groupData) {
@@ -183,7 +200,7 @@ const GroupChat = () => {
         </div>
 
         {/* Video Call Overlay */}
-        {isInCall && (
+        {isInCall && !isCallMinimized && (
           <div className="absolute inset-0 bg-gray-900 z-50 flex flex-col">
             <div className="flex-1 relative">
               {/* Main video area */}
@@ -191,7 +208,7 @@ const GroupChat = () => {
                 <div className="text-white text-center">
                   <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
                   <p className="text-xl">Video call with {groupData.name}</p>
-                  <p className="text-gray-400">3 participants</p>
+                  <p className="text-gray-400">{participantCount} participants</p>
                 </div>
               </div>
               
@@ -235,18 +252,44 @@ const GroupChat = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="center" className="bg-white border shadow-lg mb-4">
-                    <DropdownMenuItem className="hover:bg-blue-50">
+                    <DropdownMenuItem className="hover:bg-blue-50" onClick={handleShareScreen}>
                       Share Screen
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="hover:bg-blue-50">
+                    <DropdownMenuItem className="hover:bg-blue-50" onClick={handleMinimizeForChat}>
                       Send Message
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="hover:bg-blue-50">
+                    <DropdownMenuItem className="hover:bg-blue-50" onClick={handleLearnMiGroup}>
                       LearnMi (Group)
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Minimized Video Call */}
+        {isInCall && isCallMinimized && (
+          <div className="fixed top-4 right-4 z-50 bg-gray-800 rounded-lg p-3 shadow-lg">
+            <div className="flex items-center space-x-2 text-white">
+              <Users className="h-4 w-4" />
+              <span className="text-sm">{participantCount} participants</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCallMinimized(false)}
+                className="text-white hover:bg-gray-700 p-1"
+              >
+                <Video className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={endCall}
+                className="text-red-400 hover:bg-red-900 p-1"
+              >
+                <Phone className="h-3 w-3" />
+              </Button>
             </div>
           </div>
         )}
